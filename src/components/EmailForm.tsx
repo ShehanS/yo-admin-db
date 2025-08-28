@@ -48,7 +48,7 @@ const EmailForm: FC = () => {
 
     return (
         <Box sx={{width: "100%"}}>
-            {alert.visible && <Alert color={alert.type}>{alert?.message ?? ""}</Alert>}
+            {alert.visible && <Alert>{alert?.message ?? ""}</Alert>}
             <Stack spacing={3}>
                 <FormControl>
                     <FormLabel>Email Address</FormLabel>

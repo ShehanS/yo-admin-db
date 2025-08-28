@@ -1,5 +1,5 @@
 import React, {FC, useEffect, useState} from "react";
-import {Cancel, CheckCircle, ChevronLeft, ChevronRight, People, Fullscreen, FullscreenExit} from "@mui/icons-material";
+import {Cancel, CheckCircle, ChevronLeft, ChevronRight, People} from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -15,10 +15,7 @@ import {
     Select,
     Stack,
     Table,
-    Typography,
-    Modal,
-    ModalDialog,
-    ModalClose
+    Typography
 } from "@mui/joy";
 import {useMutation, useQuery} from "@apollo/client";
 import {GET_USERS, USER_ACTIVATION} from "../graphql/queries";
@@ -70,9 +67,7 @@ const Users: FC = () => {
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const [userSearchEmail, setUserSearchEmail] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
-    const [isFullscreen, setIsFullscreen] = useState(false);
     const [userActivation, {
-        data: updateUser,
         loading: userUpdateLoading,
         error: updateError
     }] = useMutation(USER_ACTIVATION);
@@ -151,190 +146,15 @@ const Users: FC = () => {
         setCurrentPage(0);
     };
 
-    const toggleFullscreen = () => {
-        setIsFullscreen(!isFullscreen);
-    };
-
-    const renderTable = () => (
-        <Table sx={{
-            tableLayout: 'fixed',
-            minWidth: isFullscreen ? '1200px' : '500px',
-            maxWidth: isFullscreen ? 'none' : '500px'
-        }}>
-            <thead>
-            <tr>
-                <th style={{ width: isFullscreen ? '120px' : '60px' }}>
-                    <Button
-                        variant="plain"
-                        onClick={() => handleSort("firstName")}
-                        sx={{p: 0, minHeight: 'auto', fontSize: isFullscreen ? '14px' : '12px'}}
-                    >
-                        Name {sortField === "firstName" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </Button>
-                </th>
-                <th style={{ width: isFullscreen ? '200px' : '80px' }}>
-                    <Button
-                        variant="plain"
-                        onClick={() => handleSort("email")}
-                        sx={{p: 0, minHeight: 'auto', fontSize: isFullscreen ? '14px' : '12px'}}
-                    >
-                        Email {sortField === "email" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </Button>
-                </th>
-                <th style={{ width: isFullscreen ? '120px' : '50px', fontSize: isFullscreen ? '14px' : '12px' }}>Contact</th>
-                <th style={{ width: isFullscreen ? '120px' : '50px', fontSize: isFullscreen ? '14px' : '12px' }}>NIC</th>
-                <th style={{ width: isFullscreen ? '150px' : '50px', fontSize: isFullscreen ? '14px' : '12px' }}>Address</th>
-                <th style={{ width: isFullscreen ? '80px' : '40px' }}>
-                    <Button
-                        variant="plain"
-                        onClick={() => handleSort("profile")}
-                        sx={{p: 0, minHeight: 'auto', fontSize: isFullscreen ? '14px' : '12px'}}
-                    >
-                        Profile {sortField === "profile" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </Button>
-                </th>
-                <th style={{ width: isFullscreen ? '100px' : '40px' }}>
-                    <Button
-                        variant="plain"
-                        onClick={() => handleSort("provider")}
-                        sx={{p: 0, minHeight: 'auto', fontSize: isFullscreen ? '14px' : '12px'}}
-                    >
-                        Provider {sortField === "provider" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </Button>
-                </th>
-                <th style={{ width: isFullscreen ? '100px' : '40px' }}>
-                    <Button
-                        variant="plain"
-                        onClick={() => handleSort("accountStatus")}
-                        sx={{p: 0, minHeight: 'auto', fontSize: isFullscreen ? '14px' : '12px'}}
-                    >
-                        Status {sortField === "accountStatus" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </Button>
-                </th>
-                <th style={{ width: isFullscreen ? '120px' : '50px' }}>
-                    <Button
-                        variant="plain"
-                        onClick={() => handleSort("createdAt")}
-                        sx={{p: 0, minHeight: 'auto', fontSize: isFullscreen ? '14px' : '12px'}}
-                    >
-                        Created At {sortField === "createdAt" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </Button>
-                </th>
-                <th style={{ width: isFullscreen ? '100px' : '40px', fontSize: isFullscreen ? '14px' : '12px' }}>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            {users.map((user) => {
-                const displayStatus = (user.provider === 'GOOGLE' && user.accountStatus === 'PENDING') ? 'ACTIVE' : user.accountStatus;
-                const fullName = `${user.firstName}${user.middleName ? ' ' + user.middleName : ''} ${user.lastName}`.trim();
-
-                return (
-                    <tr key={user.id}>
-                        <td style={{
-                            wordWrap: 'break-word',
-                            whiteSpace: 'pre-wrap',
-                            maxWidth: isFullscreen ? '120px' : '60px',
-                            overflow: 'hidden',
-                            fontSize: isFullscreen ? '14px' : '12px',
-                            padding: isFullscreen ? '8px' : '4px'
-                        }}>
-                            {fullName}
-                        </td>
-                        <td style={{
-                            wordWrap: 'break-word',
-                            whiteSpace: 'pre-wrap',
-                            maxWidth: isFullscreen ? '200px' : '80px',
-                            overflow: 'hidden',
-                            fontSize: isFullscreen ? '14px' : '12px',
-                            padding: isFullscreen ? '8px' : '4px'
-                        }}>
-                            {user.email}
-                        </td>
-                        <td style={{
-                            wordWrap: 'break-word',
-                            whiteSpace: 'pre-wrap',
-                            maxWidth: isFullscreen ? '120px' : '50px',
-                            overflow: 'hidden',
-                            fontSize: isFullscreen ? '14px' : '12px',
-                            padding: isFullscreen ? '8px' : '4px'
-                        }}>
-                            {user.contact}
-                        </td>
-                        <td style={{
-                            wordWrap: 'break-word',
-                            whiteSpace: 'pre-wrap',
-                            maxWidth: isFullscreen ? '120px' : '50px',
-                            overflow: 'hidden',
-                            fontSize: isFullscreen ? '14px' : '12px',
-                            padding: isFullscreen ? '8px' : '4px'
-                        }}>
-                            {user.nic}
-                        </td>
-                        <td style={{
-                            wordWrap: 'break-word',
-                            whiteSpace: 'pre-wrap',
-                            maxWidth: isFullscreen ? '150px' : '50px',
-                            overflow: 'hidden',
-                            fontSize: isFullscreen ? '14px' : '12px',
-                            padding: isFullscreen ? '8px' : '4px'
-                        }}>
-                            {user.address || '-'}
-                        </td>
-                        <td style={{ padding: isFullscreen ? '8px' : '4px' }}>
-                            <Chip size={isFullscreen ? "md" : "sm"} color="primary" sx={{ fontSize: isFullscreen ? '12px' : '10px' }}>
-                                {user.profile}
-                            </Chip>
-                        </td>
-                        <td style={{ padding: isFullscreen ? '8px' : '4px' }}>
-                            <Chip
-                                size={isFullscreen ? "md" : "sm"}
-                                color={user.provider === 'GOOGLE' ? 'success' : 'neutral'}
-                                sx={{ fontSize: isFullscreen ? '12px' : '10px' }}
-                            >
-                                {user.provider}
-                            </Chip>
-                        </td>
-                        <td style={{ padding: isFullscreen ? '8px' : '4px' }}>
-                            <Chip
-                                size={isFullscreen ? "md" : "sm"}
-                                color={displayStatus === 'ACTIVE' ? 'success' : displayStatus === 'PENDING' ? 'warning' : 'neutral'}
-                                startDecorator={displayStatus === 'ACTIVE' ? <CheckCircle sx={{ fontSize: isFullscreen ? '16px' : '12px' }}/> : <Cancel sx={{ fontSize: isFullscreen ? '16px' : '12px' }}/>}
-                                sx={{ fontSize: isFullscreen ? '12px' : '10px' }}
-                            >
-                                {displayStatus}
-                            </Chip>
-                        </td>
-                        <td style={{ fontSize: isFullscreen ? '14px' : '12px', padding: isFullscreen ? '8px' : '4px' }}>{new Date(user.createdAt).toLocaleDateString()}</td>
-                        <td style={{ padding: isFullscreen ? '8px' : '4px' }}>
-                            <Button
-                                size={isFullscreen ? "md" : "sm"}
-                                variant="soft"
-                                loading={userUpdateLoading}
-                                onClick={() => handleUserToggle(user)}
-                                sx={{ fontSize: isFullscreen ? '12px' : '10px', minHeight: isFullscreen ? '32px' : '24px' }}
-                            >
-                                {displayStatus === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                            </Button>
-                        </td>
-                    </tr>
-                );
-            })}
-            {users.length === 0 && !loading && (
-                <tr>
-                    <td colSpan={10} style={{textAlign: 'center', padding: '2rem'}}>
-                        <Typography level="body-lg" color="neutral">
-                            {searchTerm ? 'No users found matching your search.' : 'No users found.'}
-                        </Typography>
-                    </td>
-                </tr>
-            )}
-            </tbody>
-        </Table>
-    );
-
     if (error) {
         return (
-            <Alert color="danger">
+            <Alert
+                sx={{
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #EF4444',
+                    color: '#EF4444'
+                }}
+            >
                 Error loading users: {error.message}
             </Alert>
         );
@@ -342,7 +162,13 @@ const Users: FC = () => {
 
     if (updateError) {
         return (
-            <Alert color="danger">
+            <Alert
+                sx={{
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #EF4444',
+                    color: '#EF4444'
+                }}
+            >
                 Error updating user: {updateError.message}
             </Alert>
         );
@@ -350,123 +176,223 @@ const Users: FC = () => {
 
     return (
         <React.Fragment>
-            <Card sx={{mb: 3}}>
+            {/* Search Card */}
+            <Card sx={{
+                mb: 3,
+                backgroundColor: '#1a1a1a',
+                border: '1px solid #333333'
+            }}>
                 <CardContent>
-                    <Stack direction="row" spacing={2} alignItems="center">
+                    <Stack direction="row" spacing={2} alignItems="end">
                         <FormControl sx={{flex: 1}}>
-                            <FormLabel>Search by Email</FormLabel>
+                            <FormLabel sx={{ color: '#ffffff' }}>Search by Email</FormLabel>
                             <Input
                                 placeholder="Enter email to search..."
                                 value={userSearchEmail}
                                 onChange={(e) => setUserSearchEmail(e.target.value)}
-                                startDecorator={<People/>}
+                                startDecorator={<People sx={{ color: '#ffffff' }} />}
                                 onKeyPress={(e) => {
                                     if (e.key === 'Enter') {
                                         handleSearch();
+                                    }
+                                }}
+                                sx={{
+                                    backgroundColor: '#2a2a2a',
+                                    color: '#ffffff',
+                                    border: '1px solid #444444',
+                                    '&:hover': {
+                                        borderColor: '#666666'
+                                    },
+                                    '&:focus-within': {
+                                        borderColor: '#3B82F6'
                                     }
                                 }}
                             />
                         </FormControl>
                         <Button
                             variant="solid"
-                            color="primary"
                             onClick={handleSearch}
                             disabled={loading}
+                            sx={{
+                                backgroundColor: '#3B82F6',
+                                color: '#ffffff',
+                                '&:hover': {
+                                    backgroundColor: '#2563EB'
+                                }
+                            }}
                         >
                             Search
                         </Button>
                         {(userSearchEmail || searchTerm) && (
                             <Button
                                 variant="soft"
-                                color="neutral"
                                 onClick={clearSearch}
+                                sx={{
+                                    backgroundColor: '#2a2a2a',
+                                    color: '#ffffff',
+                                    '&:hover': {
+                                        backgroundColor: '#3a3a3a'
+                                    }
+                                }}
                             >
                                 Clear
                             </Button>
                         )}
                     </Stack>
                     {searchTerm && (
-                        <Typography level="body-sm" sx={{mt: 1, color: 'text.secondary'}}>
+                        <Typography level="body-sm" sx={{mt: 1, color: '#cccccc'}}>
                             Found {pagination?.totalElements || 0} user(s) matching "{searchTerm}"
                         </Typography>
                     )}
                 </CardContent>
             </Card>
 
-            <Card>
+            {/* Main Table Card */}
+            <Card sx={{
+                backgroundColor: '#000000',
+                border: '1px solid #333333'
+            }}>
                 <CardContent sx={{ overflow: 'auto' }}>
                     {loading && (
                         <Box sx={{display: 'flex', justifyContent: 'center', p: 2}}>
-                            <CircularProgress/>
+                            <CircularProgress sx={{ color: '#3B82F6' }} />
                         </Box>
                     )}
 
-                    <Table sx={{ tableLayout: 'fixed', minWidth: '40vw', maxWidth: '40vw' }}>
+                    <Table sx={{
+                        tableLayout: 'fixed',
+                        minWidth: '100%',
+                        backgroundColor: 'transparent',
+                        '& thead th': {
+                            backgroundColor: '#1a1a1a',
+                            color: '#ffffff',
+                            borderBottom: '2px solid #333333'
+                        },
+                        '& tbody td': {
+                            borderBottom: '1px solid #2a2a2a',
+                            color: '#ffffff'
+                        },
+                        '& tbody tr:hover': {
+                            backgroundColor: '#1a1a1a'
+                        }
+                    }}>
                         <thead>
                         <tr>
-                            <th style={{ width: '60px' }}>
+                            <th style={{ width: '120px' }}>
                                 <Button
                                     variant="plain"
                                     onClick={() => handleSort("firstName")}
-                                    sx={{p: 0, minHeight: 'auto', fontSize: '12px'}}
+                                    sx={{
+                                        p: 0,
+                                        minHeight: 'auto',
+                                        fontSize: '12px',
+                                        color: '#ffffff',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a'
+                                        }
+                                    }}
                                 >
                                     Name {sortField === "firstName" && (sortDirection === "asc" ? "↑" : "↓")}
+                                </Button>
+                            </th>
+                            <th style={{ width: '150px' }}>
+                                <Button
+                                    variant="plain"
+                                    onClick={() => handleSort("email")}
+                                    sx={{
+                                        p: 0,
+                                        minHeight: 'auto',
+                                        fontSize: '12px',
+                                        color: '#ffffff',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a'
+                                        }
+                                    }}
+                                >
+                                    Email {sortField === "email" && (sortDirection === "asc" ? "↑" : "↓")}
+                                </Button>
+                            </th>
+                            <th style={{ width: '100px', fontSize: '12px', color: '#ffffff' }}>Contact</th>
+                            <th style={{ width: '100px', fontSize: '12px', color: '#ffffff' }}>NIC</th>
+                            <th style={{ width: '120px', fontSize: '12px', color: '#ffffff' }}>Address</th>
+                            <th style={{ width: '80px' }}>
+                                <Button
+                                    variant="plain"
+                                    onClick={() => handleSort("profile")}
+                                    sx={{
+                                        p: 0,
+                                        minHeight: 'auto',
+                                        fontSize: '12px',
+                                        color: '#ffffff',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a'
+                                        }
+                                    }}
+                                >
+                                    Profile {sortField === "profile" && (sortDirection === "asc" ? "↑" : "↓")}
                                 </Button>
                             </th>
                             <th style={{ width: '80px' }}>
                                 <Button
                                     variant="plain"
-                                    onClick={() => handleSort("email")}
-                                    sx={{p: 0, minHeight: 'auto', fontSize: '12px'}}
-                                >
-                                    Email {sortField === "email" && (sortDirection === "asc" ? "↑" : "↓")}
-                                </Button>
-                            </th>
-                            <th style={{ width: '50px', fontSize: '12px' }}>Contact</th>
-                            <th style={{ width: '50px', fontSize: '12px' }}>NIC</th>
-                            <th style={{ width: '50px', fontSize: '12px' }}>Address</th>
-                            <th style={{ width: '40px' }}>
-                                <Button
-                                    variant="plain"
-                                    onClick={() => handleSort("profile")}
-                                    sx={{p: 0, minHeight: 'auto', fontSize: '12px'}}
-                                >
-                                    Profile {sortField === "profile" && (sortDirection === "asc" ? "↑" : "↓")}
-                                </Button>
-                            </th>
-                            <th style={{ width: '40px' }}>
-                                <Button
-                                    variant="plain"
                                     onClick={() => handleSort("provider")}
-                                    sx={{p: 0, minHeight: 'auto', fontSize: '12px'}}
+                                    sx={{
+                                        p: 0,
+                                        minHeight: 'auto',
+                                        fontSize: '12px',
+                                        color: '#ffffff',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a'
+                                        }
+                                    }}
                                 >
                                     Provider {sortField === "provider" && (sortDirection === "asc" ? "↑" : "↓")}
                                 </Button>
                             </th>
-                            <th style={{ width: '40px' }}>
+                            <th style={{ width: '80px' }}>
                                 <Button
                                     variant="plain"
                                     onClick={() => handleSort("accountStatus")}
-                                    sx={{p: 0, minHeight: 'auto', fontSize: '12px'}}
+                                    sx={{
+                                        p: 0,
+                                        minHeight: 'auto',
+                                        fontSize: '12px',
+                                        color: '#ffffff',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a'
+                                        }
+                                    }}
                                 >
                                     Status {sortField === "accountStatus" && (sortDirection === "asc" ? "↑" : "↓")}
                                 </Button>
                             </th>
-                            <th style={{ width: '50px' }}>
+                            <th style={{ width: '100px' }}>
                                 <Button
                                     variant="plain"
                                     onClick={() => handleSort("createdAt")}
-                                    sx={{p: 0, minHeight: 'auto', fontSize: '12px'}}
+                                    sx={{
+                                        p: 0,
+                                        minHeight: 'auto',
+                                        fontSize: '12px',
+                                        color: '#ffffff',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a'
+                                        }
+                                    }}
                                 >
                                     Created At {sortField === "createdAt" && (sortDirection === "asc" ? "↑" : "↓")}
                                 </Button>
                             </th>
-                            <th style={{ width: '40px', fontSize: '12px' }}>Actions</th>
+                            <th style={{ width: '100px', fontSize: '12px', color: '#ffffff' }}>Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         {users.map((user) => {
-                            const displayStatus = (user.provider === 'GOOGLE' && user.accountStatus === 'PENDING') ? 'ACTIVE' : user.accountStatus;
+                            // Special handling: Google users with PENDING status should be treated as ACTIVE
+                            const displayStatus = (user.provider === 'GOOGLE' && user.accountStatus === 'PENDING')
+                                ? 'ACTIVE'
+                                : user.accountStatus;
+
                             const fullName = `${user.firstName}${user.middleName ? ' ' + user.middleName : ''} ${user.lastName}`.trim();
 
                             return (
@@ -474,85 +400,106 @@ const Users: FC = () => {
                                     <td style={{
                                         wordWrap: 'break-word',
                                         whiteSpace: 'pre-wrap',
-                                        maxWidth: '60px',
-                                        overflow: 'hidden',
                                         fontSize: '12px',
-                                        padding: '4px'
+                                        padding: '8px'
                                     }}>
                                         {fullName}
                                     </td>
                                     <td style={{
                                         wordWrap: 'break-word',
                                         whiteSpace: 'pre-wrap',
-                                        maxWidth: '80px',
-                                        overflow: 'hidden',
                                         fontSize: '12px',
-                                        padding: '4px'
+                                        padding: '8px'
                                     }}>
                                         {user.email}
                                     </td>
                                     <td style={{
                                         wordWrap: 'break-word',
                                         whiteSpace: 'pre-wrap',
-                                        maxWidth: '50px',
-                                        overflow: 'hidden',
                                         fontSize: '12px',
-                                        padding: '4px'
+                                        padding: '8px'
                                     }}>
                                         {user.contact}
                                     </td>
                                     <td style={{
                                         wordWrap: 'break-word',
                                         whiteSpace: 'pre-wrap',
-                                        maxWidth: '50px',
-                                        overflow: 'hidden',
                                         fontSize: '12px',
-                                        padding: '4px'
+                                        padding: '8px'
                                     }}>
                                         {user.nic}
                                     </td>
                                     <td style={{
                                         wordWrap: 'break-word',
                                         whiteSpace: 'pre-wrap',
-                                        maxWidth: '50px',
-                                        overflow: 'hidden',
                                         fontSize: '12px',
-                                        padding: '4px'
+                                        padding: '8px'
                                     }}>
                                         {user.address || '-'}
                                     </td>
-                                    <td style={{ padding: '4px' }}>
-                                        <Chip size="sm" color="primary" sx={{ fontSize: '10px' }}>
+                                    <td style={{ padding: '8px' }}>
+                                        <Chip
+                                            size="sm"
+                                            sx={{
+                                                fontSize: '10px',
+                                                backgroundColor: '#3B82F6',
+                                                color: '#ffffff'
+                                            }}
+                                        >
                                             {user.profile}
                                         </Chip>
                                     </td>
-                                    <td style={{ padding: '4px' }}>
+                                    <td style={{ padding: '8px' }}>
                                         <Chip
                                             size="sm"
-                                            color={user.provider === 'GOOGLE' ? 'success' : 'neutral'}
-                                            sx={{ fontSize: '10px' }}
+                                            sx={{
+                                                fontSize: '10px',
+                                                backgroundColor: user.provider === 'GOOGLE' ? '#10B981' : '#6B7280',
+                                                color: '#ffffff'
+                                            }}
                                         >
                                             {user.provider}
                                         </Chip>
                                     </td>
-                                    <td style={{ padding: '4px' }}>
+                                    <td style={{ padding: '8px' }}>
                                         <Chip
                                             size="sm"
-                                            color={displayStatus === 'ACTIVE' ? 'success' : displayStatus === 'PENDING' ? 'warning' : 'neutral'}
-                                            startDecorator={displayStatus === 'ACTIVE' ? <CheckCircle sx={{ fontSize: '12px' }}/> : <Cancel sx={{ fontSize: '12px' }}/>}
-                                            sx={{ fontSize: '10px' }}
+                                            startDecorator={
+                                                displayStatus === 'ACTIVE' ?
+                                                    <CheckCircle sx={{ fontSize: '12px', color: '#ffffff' }}/> :
+                                                    <Cancel sx={{ fontSize: '12px', color: '#ffffff' }}/>
+                                            }
+                                            sx={{
+                                                fontSize: '10px',
+                                                backgroundColor: displayStatus === 'ACTIVE' ? '#10B981' :
+                                                    displayStatus === 'PENDING' ? '#F59E0B' : '#6B7280',
+                                                color: '#ffffff'
+                                            }}
                                         >
                                             {displayStatus}
+                                            {user.provider === 'GOOGLE' && user.accountStatus === 'PENDING' && (
+                                                <span style={{ fontSize: '8px', opacity: 0.7 }}> (Google)</span>
+                                            )}
                                         </Chip>
                                     </td>
-                                    <td style={{ fontSize: '12px', padding: '4px' }}>{new Date(user.createdAt).toLocaleDateString()}</td>
-                                    <td style={{ padding: '4px' }}>
+                                    <td style={{ fontSize: '12px', padding: '8px' }}>
+                                        {new Date(user.createdAt).toLocaleDateString()}
+                                    </td>
+                                    <td style={{ padding: '8px' }}>
                                         <Button
                                             size="sm"
                                             variant="soft"
                                             loading={userUpdateLoading}
                                             onClick={() => handleUserToggle(user)}
-                                            sx={{ fontSize: '10px', minHeight: '24px' }}
+                                            sx={{
+                                                fontSize: '10px',
+                                                minHeight: '28px',
+                                                backgroundColor: displayStatus === 'ACTIVE' ? '#EF4444' : '#10B981',
+                                                color: '#ffffff',
+                                                '&:hover': {
+                                                    backgroundColor: displayStatus === 'ACTIVE' ? '#DC2626' : '#059669'
+                                                }
+                                            }}
                                         >
                                             {displayStatus === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                                         </Button>
@@ -563,7 +510,7 @@ const Users: FC = () => {
                         {users.length === 0 && !loading && (
                             <tr>
                                 <td colSpan={10} style={{textAlign: 'center', padding: '2rem'}}>
-                                    <Typography level="body-lg" color="neutral">
+                                    <Typography level="body-lg" sx={{ color: '#cccccc' }}>
                                         {searchTerm ? 'No users found matching your search.' : 'No users found.'}
                                     </Typography>
                                 </td>
@@ -577,17 +524,28 @@ const Users: FC = () => {
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            mt: 2,
+                            mt: 3,
                             flexWrap: 'wrap',
-                            gap: 2
+                            gap: 2,
+                            p: 2,
+                            backgroundColor: '#1a1a1a',
+                            borderRadius: 'sm',
+                            border: '1px solid #333333'
                         }}>
                             <Stack direction="row" spacing={1} alignItems="center">
-                                <Typography level="body-sm">Rows per page:</Typography>
+                                <Typography level="body-sm" sx={{ color: '#ffffff' }}>
+                                    Rows per page:
+                                </Typography>
                                 <Select
                                     value={pageSize}
                                     onChange={handlePageSizeChange}
                                     size="sm"
-                                    sx={{minWidth: 80}}
+                                    sx={{
+                                        minWidth: 80,
+                                        backgroundColor: '#2a2a2a',
+                                        color: '#ffffff',
+                                        border: '1px solid #444444'
+                                    }}
                                 >
                                     <Option value={5}>5</Option>
                                     <Option value={10}>10</Option>
@@ -596,7 +554,7 @@ const Users: FC = () => {
                                 </Select>
                             </Stack>
 
-                            <Typography level="body-sm" color="neutral">
+                            <Typography level="body-sm" sx={{ color: '#cccccc' }}>
                                 {pagination?.totalElements === 0
                                     ? 'No results'
                                     : `${currentPage * pageSize + 1}-${Math.min((currentPage + 1) * pageSize, pagination?.totalElements || 0)} of ${pagination?.totalElements || 0}`
@@ -609,43 +567,132 @@ const Users: FC = () => {
                                     size="sm"
                                     onClick={() => handlePageChange(currentPage - 1)}
                                     disabled={!pagination?.hasPrevious || loading}
-                                    startDecorator={<ChevronLeft/>}
+                                    startDecorator={<ChevronLeft />}
+                                    sx={{
+                                        backgroundColor: 'transparent',
+                                        borderColor: '#444444',
+                                        color: '#ffffff',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a',
+                                            borderColor: '#666666'
+                                        },
+                                        '&:disabled': {
+                                            backgroundColor: 'transparent',
+                                            borderColor: '#2a2a2a',
+                                            color: '#666666'
+                                        }
+                                    }}
                                 >
                                     Previous
                                 </Button>
 
-                                {Array.from({length: Math.min(5, pagination?.totalPages || 0)}, (_, i) => {
-                                    let pageNum;
-                                    if ((pagination?.totalPages || 0) <= 5) {
-                                        pageNum = i;
-                                    } else if (currentPage <= 2) {
-                                        pageNum = i;
-                                    } else if (currentPage >= (pagination?.totalPages || 0) - 3) {
-                                        pageNum = (pagination?.totalPages || 0) - 5 + i;
-                                    } else {
-                                        pageNum = currentPage - 2 + i;
-                                    }
-
-                                    return (
+                                {/* Page Number Buttons */}
+                                {pagination?.totalPages && pagination.totalPages > 1 && (
+                                    <>
+                                        {/* First page */}
                                         <Button
-                                            key={pageNum}
-                                            variant={pageNum === currentPage ? "solid" : "outlined"}
+                                            variant={currentPage === 0 ? "solid" : "outlined"}
                                             size="sm"
-                                            onClick={() => handlePageChange(pageNum)}
+                                            onClick={() => handlePageChange(0)}
                                             disabled={loading}
-                                            sx={{minWidth: 40}}
+                                            sx={{
+                                                minWidth: 40,
+                                                backgroundColor: currentPage === 0 ? '#3B82F6' : 'transparent',
+                                                borderColor: currentPage === 0 ? '#3B82F6' : '#444444',
+                                                color: '#ffffff',
+                                                '&:hover': {
+                                                    backgroundColor: currentPage === 0 ? '#2563EB' : '#2a2a2a',
+                                                    borderColor: currentPage === 0 ? '#2563EB' : '#666666'
+                                                }
+                                            }}
                                         >
-                                            {pageNum + 1}
+                                            1
                                         </Button>
-                                    );
-                                })}
+
+                                        {/* Show dots if there's a gap */}
+                                        {currentPage > 3 && (
+                                            <Typography sx={{ px: 1, color: '#cccccc' }}>...</Typography>
+                                        )}
+
+                                        {/* Pages around current page */}
+                                        {Array.from({ length: pagination.totalPages }, (_, i) => i)
+                                            .filter(pageNum => {
+                                                if (pageNum === 0 || pageNum === pagination.totalPages - 1) {
+                                                    return false; // We handle first and last separately
+                                                }
+                                                return Math.abs(pageNum - currentPage) <= 2;
+                                            })
+                                            .map(pageNum => (
+                                                <Button
+                                                    key={pageNum}
+                                                    variant={pageNum === currentPage ? "solid" : "outlined"}
+                                                    size="sm"
+                                                    onClick={() => handlePageChange(pageNum)}
+                                                    disabled={loading}
+                                                    sx={{
+                                                        minWidth: 40,
+                                                        backgroundColor: pageNum === currentPage ? '#3B82F6' : 'transparent',
+                                                        borderColor: pageNum === currentPage ? '#3B82F6' : '#444444',
+                                                        color: '#ffffff',
+                                                        '&:hover': {
+                                                            backgroundColor: pageNum === currentPage ? '#2563EB' : '#2a2a2a',
+                                                            borderColor: pageNum === currentPage ? '#2563EB' : '#666666'
+                                                        }
+                                                    }}
+                                                >
+                                                    {pageNum + 1}
+                                                </Button>
+                                            ))}
+
+                                        {/* Show dots if there's a gap before last page */}
+                                        {currentPage < pagination.totalPages - 4 && (
+                                            <Typography sx={{ px: 1, color: '#cccccc' }}>...</Typography>
+                                        )}
+
+                                        {/* Last page */}
+                                        {pagination.totalPages > 1 && (
+                                            <Button
+                                                variant={currentPage === pagination.totalPages - 1 ? "solid" : "outlined"}
+                                                size="sm"
+                                                onClick={() => handlePageChange(pagination.totalPages - 1)}
+                                                disabled={loading}
+                                                sx={{
+                                                    minWidth: 40,
+                                                    backgroundColor: currentPage === pagination.totalPages - 1 ? '#3B82F6' : 'transparent',
+                                                    borderColor: currentPage === pagination.totalPages - 1 ? '#3B82F6' : '#444444',
+                                                    color: '#ffffff',
+                                                    '&:hover': {
+                                                        backgroundColor: currentPage === pagination.totalPages - 1 ? '#2563EB' : '#2a2a2a',
+                                                        borderColor: currentPage === pagination.totalPages - 1 ? '#2563EB' : '#666666'
+                                                    }
+                                                }}
+                                            >
+                                                {pagination.totalPages}
+                                            </Button>
+                                        )}
+                                    </>
+                                )}
 
                                 <Button
                                     variant="outlined"
                                     size="sm"
                                     onClick={() => handlePageChange(currentPage + 1)}
                                     disabled={!pagination?.hasNext || loading}
-                                    endDecorator={<ChevronRight/>}
+                                    endDecorator={<ChevronRight />}
+                                    sx={{
+                                        backgroundColor: 'transparent',
+                                        borderColor: '#444444',
+                                        color: '#ffffff',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a',
+                                            borderColor: '#666666'
+                                        },
+                                        '&:disabled': {
+                                            backgroundColor: 'transparent',
+                                            borderColor: '#2a2a2a',
+                                            color: '#666666'
+                                        }
+                                    }}
                                 >
                                     Next
                                 </Button>

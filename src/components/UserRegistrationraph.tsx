@@ -3,7 +3,7 @@ import {Brush, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAx
 import {useLazyQuery} from "@apollo/client";
 import {GET_USER_COUNT_30MIN_BUCKETS_IN_RANGE} from "../graphql/queries";
 import {ResponseMessage, UserData5Min} from "../data/data";
-import {Button, Dropdown, FormControl, FormLabel, Menu, MenuButton, MenuItem} from "@mui/joy";
+import {Button, Dropdown, FormControl, FormLabel, Menu, MenuButton, MenuItem, Card, CardContent, Box, Typography} from "@mui/joy";
 import {DateRangeRounded, KeyboardArrowDown, RefreshRounded} from "@mui/icons-material";
 
 interface FormattedUserData {
@@ -59,12 +59,6 @@ const UserRegistrationGraph: FC = () => {
             endTime: () => Math.floor(Date.now() / 1000)
         },
         {
-            label: "Last 90 Days",
-            value: "90d",
-            startTime: () => Math.floor((Date.now() - 90 * 24 * 60 * 60 * 1000) / 1000),
-            endTime: () => Math.floor(Date.now() / 1000)
-        },
-        {
             label: "Custom Range",
             value: "custom",
             startTime: () => customStartDate ? Math.floor(new Date(customStartDate).getTime() / 1000) : Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000),
@@ -72,11 +66,9 @@ const UserRegistrationGraph: FC = () => {
         }
     ];
 
-
     const getCurrentTimeRange = () => {
         return timeRanges.find(range => range.value === selectedTimeRange) || timeRanges[3];
     };
-
 
     const loadDataForTimeRange = () => {
         const currentRange = getCurrentTimeRange();
@@ -88,9 +80,10 @@ const UserRegistrationGraph: FC = () => {
         });
     };
 
-
     useEffect(() => {
-        loadDataForTimeRange();
+        if (selectedTimeRange !== "custom") {
+            loadDataForTimeRange();
+        }
     }, [selectedTimeRange]);
 
     useEffect(() => {
@@ -99,6 +92,9 @@ const UserRegistrationGraph: FC = () => {
 
         setCustomEndDate(now.toISOString().slice(0, 16));
         setCustomStartDate(weekAgo.toISOString().slice(0, 16));
+
+        // Load initial data for 7 days
+        loadDataForTimeRange();
     }, []);
 
     const formatTimestamp = (timestamp: number) => {
@@ -160,165 +156,245 @@ const UserRegistrationGraph: FC = () => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             return (
-                <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
-                    <p className="text-sm font-medium">{`Time: ${data.formattedDate}`}</p>
-                    <p className="text-sm font-bold text-blue-600">{`Users: ${data.count}`}</p>
-                </div>
+                <Box
+                    sx={{
+                        backgroundColor: '#1a1a1a',
+                        p: 2,
+                        border: '1px solid #333333',
+                        borderRadius: 'sm',
+                        boxShadow: '0 4px 12px rgba(255,255,255,0.1)',
+                    }}
+                >
+                    <Typography level="body-sm" sx={{ color: '#ffffff', mb: 0.5 }}>
+                        Time: {data.formattedDate}
+                    </Typography>
+                    <Typography level="title-sm" sx={{ color: '#3B82F6' }}>
+                        Users: {data.count}
+                    </Typography>
+                </Box>
             );
         }
         return null;
     };
 
     return (
-        <div className="w-full">
-            <div className="w-full mb-4">
-                {selectedTimeRange !== "custom" ? (
-                    <div className="flex flex-row items-end justify-between gap-4 flex-wrap">
-                        <FormControl className="min-w-48">
-                            <FormLabel>Time Range</FormLabel>
-                            <Dropdown>
-                                <MenuButton
-                                    variant="outlined"
+        <Card sx={{
+            width: "100%",
+            backgroundColor: '#000000',
+            border: '1px solid #333333',
+            boxShadow: 'none'
+        }}>
+            <CardContent>
+                <Box sx={{ width: '100%', mb: 3 }}>
+                    {/* Time Range Buttons */}
+                    <Box sx={{ mb: 2 }}>
+                        <Typography level="body-sm" sx={{ color: '#ffffff', mb: 1 }}>
+                            Time Range
+                        </Typography>
+                        <Box sx={{
+                            display: 'flex',
+                            gap: 1,
+                            flexWrap: 'wrap',
+                            mb: 2
+                        }}>
+                            {timeRanges.slice(0, -1).map((range) => (
+                                <Button
+                                    key={range.value}
                                     size="sm"
-                                    startDecorator={<DateRangeRounded/>}
-                                    endDecorator={<KeyboardArrowDown/>}
+                                    variant={selectedTimeRange === range.value ? "solid" : "outlined"}
+                                    onClick={() => handleTimeRangeChange(range.value)}
+                                    sx={{
+                                        backgroundColor: selectedTimeRange === range.value ? '#ffffff' : 'transparent',
+                                        color: selectedTimeRange === range.value ? '#000000' : '#ffffff',
+                                        borderColor: '#444444',
+                                        '&:hover': {
+                                            backgroundColor: selectedTimeRange === range.value ? '#e6e6e6' : '#2a2a2a',
+                                            borderColor: '#666666'
+                                        }
+                                    }}
                                 >
-                                    {getCurrentTimeRange().label}
-                                </MenuButton>
-                                <Menu>
-                                    {timeRanges.map((range) => (
-                                        <MenuItem
-                                            key={range.value}
-                                            onClick={() => handleTimeRangeChange(range.value)}
-                                            selected={selectedTimeRange === range.value}
-                                        >
-                                            {range.label}
-                                        </MenuItem>
-                                    ))}
-                                </Menu>
-                            </Dropdown>
-                        </FormControl>
-
-                        <Button onClick={handleRefresh} size="sm" disabled={loading}>
-                            <RefreshRounded/>
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        <div className="flex flex-row items-end justify-between gap-4">
-                            <FormControl className="min-w-48">
-                                <FormLabel>Time Range</FormLabel>
-                                <Dropdown>
-                                    <MenuButton
-                                        variant="outlined"
-                                        size="sm"
-                                        startDecorator={<DateRangeRounded/>}
-                                        endDecorator={<KeyboardArrowDown/>}
-                                    >
-                                        {getCurrentTimeRange().label}
-                                    </MenuButton>
-                                    <Menu>
-                                        {timeRanges.map((range) => (
-                                            <MenuItem
-                                                key={range.value}
-                                                onClick={() => handleTimeRangeChange(range.value)}
-                                                selected={selectedTimeRange === range.value}
-                                            >
-                                                {range.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Menu>
-                                </Dropdown>
-                            </FormControl>
-
-                            <Button onClick={handleRefresh} size="sm" disabled={loading}>
-                                <RefreshRounded/>
+                                    {range.label}
+                                </Button>
+                            ))}
+                            <Button
+                                size="sm"
+                                variant={selectedTimeRange === "custom" ? "solid" : "outlined"}
+                                onClick={() => handleTimeRangeChange("custom")}
+                                sx={{
+                                    backgroundColor: selectedTimeRange === "custom" ? '#ffffff' : 'transparent',
+                                    color: selectedTimeRange === "custom" ? '#000000' : '#ffffff',
+                                    borderColor: '#444444',
+                                    '&:hover': {
+                                        backgroundColor: selectedTimeRange === "custom" ? '#e6e6e6' : '#2a2a2a',
+                                        borderColor: '#666666'
+                                    }
+                                }}
+                            >
+                                Custom Range
                             </Button>
-                        </div>
+                        </Box>
+                    </Box>
 
-                        <div className="flex flex-row items-end gap-4 flex-wrap">
-                            <FormControl className="flex-1 min-w-48">
-                                <FormLabel>Start Date & Time</FormLabel>
+                    {/* Custom Date Inputs - Show only when Custom is selected */}
+                    {selectedTimeRange === "custom" && (
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'end',
+                            gap: 2,
+                            flexWrap: 'wrap',
+                            mb: 2,
+                            p: 2,
+                            backgroundColor: '#1a1a1a',
+                            borderRadius: 'sm',
+                            border: '1px solid #333333'
+                        }}>
+                            <FormControl sx={{ flex: 1, minWidth: 200 }}>
+                                <FormLabel sx={{ color: '#ffffff' }}>Start Date & Time</FormLabel>
                                 <input
                                     type="datetime-local"
                                     value={customStartDate}
                                     onChange={(e) => setCustomStartDate(e.target.value)}
-                                    onBlur={handleCustomDateChange}
-                                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-8"
+                                    style={{
+                                        padding: '8px 12px',
+                                        backgroundColor: '#2a2a2a',
+                                        border: '1px solid #444444',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        color: '#ffffff',
+                                        height: '36px'
+                                    }}
                                 />
                             </FormControl>
-                            <FormControl className="flex-1 min-w-48">
-                                <FormLabel>End Date & Time</FormLabel>
+                            <FormControl sx={{ flex: 1, minWidth: 200 }}>
+                                <FormLabel sx={{ color: '#ffffff' }}>End Date & Time</FormLabel>
                                 <input
                                     type="datetime-local"
                                     value={customEndDate}
                                     onChange={(e) => setCustomEndDate(e.target.value)}
-                                    onBlur={handleCustomDateChange}
-                                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-8"
+                                    style={{
+                                        padding: '8px 12px',
+                                        backgroundColor: '#2a2a2a',
+                                        border: '1px solid #444444',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        color: '#ffffff',
+                                        height: '36px'
+                                    }}
                                 />
                             </FormControl>
                             <Button
                                 onClick={handleCustomDateChange}
                                 size="sm"
-                                variant="outlined"
-                                className="shrink-0"
+                                sx={{
+                                    backgroundColor: '#3B82F6',
+                                    color: '#ffffff',
+                                    '&:hover': {
+                                        backgroundColor: '#2563EB'
+                                    },
+                                    flexShrink: 0,
+                                    height: '36px'
+                                }}
                             >
                                 Apply Range
                             </Button>
-                        </div>
-                    </div>
+                        </Box>
+                    )}
+
+                    {/* Refresh Button */}
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                            onClick={handleRefresh}
+                            size="sm"
+                            disabled={loading}
+                            startDecorator={<RefreshRounded />}
+                            sx={{
+                                backgroundColor: '#ffffff',
+                                color: '#000000',
+                                '&:hover': {
+                                    backgroundColor: '#e6e6e6'
+                                },
+                                '&:disabled': {
+                                    backgroundColor: '#666666',
+                                    color: '#cccccc'
+                                }
+                            }}
+                        >
+                            Refresh
+                        </Button>
+                    </Box>
+                </Box>
+
+                {loading && (
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Typography sx={{ color: '#ffffff' }}>Loading...</Typography>
+                    </Box>
                 )}
-            </div>
 
+                {error && (
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Typography sx={{ color: '#EF4444' }}>Error: {error.message}</Typography>
+                    </Box>
+                )}
 
-            {loading && <div className="text-center py-4">Loading...</div>}
-            {error && <div className="text-red-500 text-center py-4">Error: {error.message}</div>}
+                {userCount.length > 0 && (
+                    <Box sx={{ width: '100%' }}>
+                        <ResponsiveContainer width="100%" height={400}>
+                            <LineChart
+                                data={userCount}
+                                margin={{top: 5, right: 30, left: 20, bottom: 80}}
+                            >
+                                <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#333333"
+                                />
+                                <XAxis
+                                    dataKey="formattedTime"
+                                    tick={{ fontSize: 11, fill: '#ffffff' }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={60}
+                                    interval={0}
+                                    axisLine={{ stroke: '#666666' }}
+                                    tickLine={{ stroke: '#666666' }}
+                                />
+                                <YAxis
+                                    allowDecimals={false}
+                                    tick={{ fontSize: 11, fill: '#ffffff' }}
+                                    axisLine={{ stroke: '#666666' }}
+                                    tickLine={{ stroke: '#666666' }}
+                                />
+                                <Tooltip content={<CustomTooltip/>}/>
+                                <Line
+                                    type="monotone"
+                                    dataKey="count"
+                                    stroke="#3B82F6"
+                                    strokeWidth={2}
+                                    dot={{fill: '#3B82F6', strokeWidth: 2, r: 4}}
+                                    activeDot={{r: 6, stroke: '#3B82F6', strokeWidth: 2}}
+                                />
 
-            {userCount.length > 0 && (
-                <ResponsiveContainer width="100%" height={400}>
-                    <LineChart
-                        data={userCount}
-                        margin={{top: 5, right: 30, left: 20, bottom: 80}}
-                    >
-                        <CartesianGrid strokeDasharray="3 3"/>
-                        <XAxis
-                            dataKey="formattedTime"
-                            tick={{fontSize: 11}}
-                            angle={-45}
-                            textAnchor="end"
-                            height={60}
-                            interval={0}
-                        />
-                        <YAxis
-                            allowDecimals={false}
-                            tick={{fontSize: 11}}
-                        />
-                        <Tooltip content={<CustomTooltip/>}/>
-                        <Line
-                            type="monotone"
-                            dataKey="count"
-                            stroke="#8884d8"
-                            strokeWidth={2}
-                            dot={{fill: '#8884d8', strokeWidth: 2, r: 4}}
-                            activeDot={{r: 6, stroke: '#8884d8', strokeWidth: 2}}
-                        />
+                                <Brush
+                                    dataKey="formattedTime"
+                                    height={30}
+                                    stroke="#3B82F6"
+                                    fill="#2a2a2a"
+                                    tickFormatter={(value) => ''}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </Box>
+                )}
 
-                        <Brush
-                            dataKey="formattedTime"
-                            height={30}
-                            stroke="#8884d8"
-                            fill="#f0f0f0"
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
-            )}
-
-            {!loading && !error && userCount.length === 0 && (
-                <div className="text-gray-500 text-center py-8">
-                    No data available for the selected time range
-                </div>
-            )}
-        </div>
+                {!loading && !error && userCount.length === 0 && (
+                    <Box sx={{ textAlign: 'center', py: 8 }}>
+                        <Typography sx={{ color: '#888888' }}>
+                            No data available for the selected time range
+                        </Typography>
+                    </Box>
+                )}
+            </CardContent>
+        </Card>
     );
 };
 

@@ -1,104 +1,90 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
     Alert,
-    AspectRatio,
     Box,
     Button,
     Card,
     CardContent,
-    Chip,
     CssBaseline,
     CssVarsProvider,
-    FormControl,
-    FormLabel,
+    extendTheme,
     Grid,
-    IconButton,
     Input,
     List,
     ListItem,
     ListItemButton,
     ListItemContent,
     ListItemDecorator,
-    Modal,
-    ModalClose,
-    ModalDialog,
-    Option,
-    Select,
     Sheet,
     Stack,
-    Table,
-    Textarea,
     Typography
 } from '@mui/joy';
-import {Add, Dashboard, Delete, Edit, Email, MusicNote, People, Queue} from '@mui/icons-material';
+import {Dashboard, Email, People, Queue} from '@mui/icons-material';
 import UserRegistrationGraph from "./components/UserRegistrationraph";
 import EmailForm from "./components/EmailForm";
-import {useLazyQuery, useMutation, useQuery} from "@apollo/client";
-import {GET_EVENTS, GET_SITE_CONFIG, GET_ZONES, UPDATE_SITE_CONFIG} from "./graphql/queries";
+import {useMutation, useQuery} from "@apollo/client";
+import {GET_EVENTS, GET_SITE_CONFIG, UPDATE_SITE_CONFIG} from "./graphql/queries";
 import {ResponseMessage} from "./data/data";
 import MaleVsFemail from "./components/MaleVsFemail";
 import AgeDistribution from "./components/AgeDistributio";
 import Users from "./components/Users";
 import TicketStatusGraph from "./components/TicketStatusGraph";
 
-const MOCK_DATA = {
-    systemHealth: {
-        memory: [
-            {time: '00:00', usage: 45},
-            {time: '04:00', usage: 52},
-            {time: '08:00', usage: 68},
-            {time: '12:00', usage: 75},
-            {time: '16:00', usage: 82},
-            {time: '20:00', usage: 69}
-        ],
-        websockets: 1247,
-        uptime: '99.8%',
-        cpu: 34
+// Black & White Theme
+const blackWhiteTheme = extendTheme({
+    colorSchemes: {
+        dark: {
+            palette: {
+                background: {
+                    body: '#000000',
+                    surface: '#1a1a1a',
+                    level1: '#2a2a2a',
+                    level2: '#3a3a3a',
+                },
+                text: {
+                    primary: '#ffffff',
+                    secondary: '#cccccc',
+                    tertiary: '#888888',
+                },
+                primary: {
+                    50: '#f5f5f5',
+                    100: '#e0e0e0',
+                    200: '#cccccc',
+                    300: '#b3b3b3',
+                    400: '#999999',
+                    500: '#ffffff',
+                    600: '#e6e6e6',
+                    700: '#cccccc',
+                    800: '#b3b3b3',
+                    900: '#999999',
+                },
+                neutral: {
+                    50: '#f5f5f5',
+                    100: '#e0e0e0',
+                    200: '#cccccc',
+                    300: '#999999',
+                    400: '#666666',
+                    500: '#333333',
+                    600: '#2a2a2a',
+                    700: '#1a1a1a',
+                    800: '#0d0d0d',
+                    900: '#000000',
+                },
+                danger: {
+                    500: '#ffffff',
+                },
+                success: {
+                    500: '#ffffff',
+                },
+                warning: {
+                    500: '#cccccc',
+                },
+            },
+        },
     },
-    queues: [
-        {id: 'booking-queue', name: 'Booking Queue', count: 45, status: 'active'},
-        {id: 'payment-queue', name: 'Payment Queue', count: 23, status: 'active'},
-        {id: 'notification-queue', name: 'Notification Queue', count: 12, status: 'warning'},
-        {id: 'email-queue', name: 'Email Queue', count: 8, status: 'active'}
-    ],
-    events: [
-        {
-            _id: '67d01ada3c5a4f220ef1f992',
-            eventName: 'YOGESHWARI',
-            eventId: 'event1',
-            eventDate: '2025-10-28',
-            eventTime: '6.00 P.M',
-            eventDescription: 'Sample Description',
-            eventLocation: 'CMB',
-            maxTicket: 2000,
-            organizer: 'Organizer',
-            image: 'https://via.placeholder.com/300x200?text=Event+Image',
-            theme: 'white'
-        }
-    ],
-    zones: [
-        {
-            _id: '67f097d893cfe733a033f55a',
-            eventId: 'event-yogeshwari',
-            zoneId: 'zoneA',
-            name: 'Zone A',
-            price: 2000,
-            discount: 0,
-            available: false,
-            maxTicket: 2000,
-            remainingTicket: 0,
-            soldTicket: 2000,
-            eventDate: '2025-10-29',
-            eventIdDoc: '67dfe5fd2c1d252daf311534',
-            labelColor: '#8666d5',
-            labelPosition: 'right'
-        }
-    ],
-    users: [
-        {id: '1', name: 'John Doe', email: 'john@example.com', status: 'active', lastLogin: '2025-01-08'},
-        {id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'inactive', lastLogin: '2025-01-05'}
-    ]
-};
+});
+
+
 
 interface Event {
     _id: string;
@@ -142,8 +128,8 @@ interface User {
 const TicketingAdminDashboard: React.FC = () => {
     const [selectedMenu, setSelectedMenu] = useState<string>('dashboard');
     const [events, setEvents] = useState<Event[]>([]);
-    const [zones, setZones] = useState<Zone[]>(MOCK_DATA.zones);
-    const [users, setUsers] = useState<User[]>(MOCK_DATA.users);
+    const [zones, setZones] = useState<Zone[]>();
+    const [users, setUsers] = useState<User[]>();
     const [openEventModal, setOpenEventModal] = useState<boolean>(false);
     const [openZoneModal, setOpenZoneModal] = useState<boolean>(false);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -168,13 +154,9 @@ const TicketingAdminDashboard: React.FC = () => {
         enabledTime: 0,
         configName: "site"
     })
-    const [{data: zonesResponse, loading: zoneLoading, zoneError: zoneError}] = useLazyQuery(GET_ZONES)
 
     const {data: eventsResponse, loading: loadingEvents, error: getEventError} = useQuery(GET_EVENTS)
-
-
     const [enabledTimeDisplay, setEnabledTimeDisplay] = useState('');
-
 
     useEffect(() => {
         const response = eventsResponse?.getEvents as ResponseMessage;
@@ -184,11 +166,10 @@ const TicketingAdminDashboard: React.FC = () => {
     }, [eventsResponse])
 
     const menuItems = useMemo(() => [
-        {key: 'dashboard', label: 'Dashboard', icon: <Dashboard/>},
-        {key: 'ticket', label: 'Tickets Status', icon: <Queue/>},
-        // {key: 'concerts', label: 'Manage Concerts', icon: <MusicNote/>},
-        {key: 'users', label: 'Manage Users', icon: <People/>},
-        {key: 'treasureHunter', label: 'Treasure Hunter', icon: <Email/>}
+        {key: 'dashboard', label: 'Dashboard', icon: <Dashboard sx={{color: '#cccccc'}}/>},
+        {key: 'ticket', label: 'Tickets Status', icon: <Queue sx={{color: '#cccccc'}}/>},
+        {key: 'users', label: 'Manage Users', icon: <People sx={{color: '#cccccc'}}/>},
+        {key: 'treasureHunter', label: 'Treasure Hunter', icon: <Email sx={{color: '#cccccc'}}/>}
     ], []);
 
     const millisecondsToDatetimeLocal = (milliseconds) => {
@@ -196,7 +177,6 @@ const TicketingAdminDashboard: React.FC = () => {
         const date = new Date(milliseconds);
         return date.toISOString().slice(0, 16);
     };
-
 
     useEffect(() => {
         const response = siteConfigData?.isEnable as ResponseMessage;
@@ -298,6 +278,7 @@ const TicketingAdminDashboard: React.FC = () => {
                 })
         }
     };
+
     const handleDateChange = (e) => {
         const dateValue = e.target.value;
         const timeValue = enabledTimeDisplay?.split('T')[1] || '00:00';
@@ -308,263 +289,185 @@ const TicketingAdminDashboard: React.FC = () => {
     };
 
     const DashboardContent = useMemo(() => (
-        <Box sx={{p: 3, width: "50vw"}}>
-            <Typography level="h2" sx={{mb: 3}}>System Dashboard</Typography>
-            <Grid xs={12} md={12}>
-                <Card>
-                    <CardContent>
-                        <Typography level="h4" sx={{mb: 2}}>User Registration</Typography>
-                        <UserRegistrationGraph/>
-                    </CardContent>
-                </Card>
-            </Grid>
+        <Box sx={{p: 3, width: "100%", backgroundColor: '#000000', minHeight: '100vh'}}>
+            <Typography level="h2" sx={{mb: 3, color: '#ffffff', fontWeight: 'bold'}}>
+                Yogeshwari System Dashboard
+            </Typography>
+            <Grid container spacing={3}>
+                <Grid xs={12}>
+                    <Card sx={{backgroundColor: '#1a1a1a', border: '1px solid #333333'}}>
+                        <CardContent>
+                            <Typography level="h4" sx={{mb: 2, color: '#ffffff'}}>
+                                User Registration Analytics
+                            </Typography>
+                            <Box sx={{backgroundColor: '#000000', p: 2, borderRadius: 'md'}}>
+                                <UserRegistrationGraph/>
+                            </Box>
+                        </CardContent>
+                    </Card>
+                </Grid>
 
-            <Grid xs={12} md={12}>
-                <Card>
-                    <CardContent>
-                        <Typography level="h4" sx={{mb: 2}}>Gender Distribution(Male vs Female)</Typography>
-                        <MaleVsFemail/>
-                    </CardContent>
-                </Card>
-            </Grid>
-            <Grid xs={12} md={12}>
-                <Card>
-                    <CardContent>
-                        <Typography level="h4" sx={{mb: 2}}>Age Distribution</Typography>
-                        <AgeDistribution/>
-                    </CardContent>
-                </Card>
+                <Grid xs={12}>
+                    <Card sx={{backgroundColor: '#1a1a1a', border: '1px solid #333333'}}>
+                        <CardContent>
+                            <Typography level="h4" sx={{mb: 2, color: '#ffffff'}}>
+                                Gender Distribution
+                            </Typography>
+                            <Box sx={{backgroundColor: '#000000', p: 2, borderRadius: 'md'}}>
+                                <MaleVsFemail/>
+                            </Box>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                <Grid xs={12}>
+                    <Card sx={{backgroundColor: '#1a1a1a', border: '1px solid #333333'}}>
+                        <CardContent>
+                            <Typography level="h4" sx={{mb: 2, color: '#ffffff'}}>
+                                Age Distribution Analysis
+                            </Typography>
+                            <Box sx={{backgroundColor: '#000000', p: 2, borderRadius: 'md'}}>
+                                <AgeDistribution/>
+                            </Box>
+                        </CardContent>
+                    </Card>
+                </Grid>
             </Grid>
         </Box>
     ), []);
 
     const TreasureHunterContent = useMemo(() => (
-        <Box sx={{p: 3}}>
-            <Typography level="h2" sx={{mb: 3}}>Treasure Hunter</Typography>
+        <Box sx={{p: 3, backgroundColor: '#000000', minHeight: '100vh'}}>
+            <Typography level="h2" sx={{mb: 3, color: '#ffffff', fontWeight: 'bold'}}>
+                Yogeshwari Treasure Hunter
+            </Typography>
 
             <Grid container spacing={3}>
-
-                <Grid xs={12} md={12}>
-
-                    <Card>
+                <Grid xs={12}>
+                    <Card sx={{backgroundColor: '#1a1a1a', border: '1px solid #333333'}}>
                         <CardContent>
-                            <Typography level="h4" sx={{mb: 2}}>
-                                Lock Screen
+                            <Typography level="h4" sx={{mb: 2, color: '#ffffff'}}>
+                                Lock Screen Control
                             </Typography>
-                            {alert.visible && <Alert color={alert.type}>{alert?.message ?? ""}</Alert>}
+                            {alert.visible && (
+                                <Alert
+                                    sx={{
+                                        mb: 2,
+                                        backgroundColor: '#2a2a2a',
+                                        color: '#ffffff',
+                                        border: '1px solid #444444'
+                                    }}
+                                >
+                                    {alert?.message ?? ""}
+                                </Alert>
+                            )}
                             <Stack spacing={2}>
                                 <div>
-                                    <Typography level="body-sm" sx={{mb: 1}}>
+                                    <Typography level="body-sm" sx={{mb: 1, color: '#cccccc'}}>
                                         Enable Date & Time
                                     </Typography>
                                     <Grid container spacing={2}>
                                         <Grid xs={12} sm={6}>
-                                            <Typography level="body-xs" sx={{mb: 0.5}}>
+                                            <Typography level="body-xs" sx={{mb: 0.5, color: '#ffffff'}}>
                                                 Date
                                             </Typography>
                                             <Input
                                                 type="date"
                                                 value={enabledTimeDisplay?.split('T')[0] || ''}
                                                 onChange={handleDateChange}
+                                                sx={{
+                                                    backgroundColor: '#2a2a2a',
+                                                    color: '#ffffff',
+                                                    border: '1px solid #444444',
+                                                    '&:hover': {borderColor: '#666666'}
+                                                }}
                                                 slotProps={{
                                                     input: {
-                                                        style: {colorScheme: 'dark'}
+                                                        style: {colorScheme: 'dark', color: '#ffffff'}
                                                     }
                                                 }}
                                             />
                                         </Grid>
                                         <Grid xs={12} sm={6}>
-                                            <Typography level="body-xs" sx={{mb: 0.5}}>
+                                            <Typography level="body-xs" sx={{mb: 0.5, color: '#ffffff'}}>
                                                 Time
                                             </Typography>
                                             <Input
                                                 type="time"
                                                 value={enabledTimeDisplay?.split('T')[1] || ''}
                                                 onChange={handleTimeChange}
+                                                sx={{
+                                                    backgroundColor: '#2a2a2a',
+                                                    color: '#ffffff',
+                                                    border: '1px solid #444444',
+                                                    '&:hover': {borderColor: '#666666'}
+                                                }}
                                                 slotProps={{
                                                     input: {
-                                                        style: {colorScheme: 'dark'}
+                                                        style: {colorScheme: 'dark', color: '#ffffff'}
                                                     }
                                                 }}
                                             />
                                         </Grid>
                                     </Grid>
                                     {siteConfig?.enabledTime && (
-                                        <Typography level="body-xs" sx={{mt: 0.5, color: 'text.tertiary'}}>
+                                        <Typography level="body-xs" sx={{mt: 0.5, color: '#888888'}}>
                                             Milliseconds: {siteConfig.enabledTime} |
                                             Selected: {enabledTimeDisplay ? new Date(enabledTimeDisplay).toLocaleString() : 'None'}
                                         </Typography>
                                     )}
                                 </div>
-                                <Button onClick={handleToggleSite}>
-                                    {siteConfig?.siteEnable ? "Disable" : "Enable"}
+                                <Button
+                                    onClick={handleToggleSite}
+                                    sx={{
+                                        backgroundColor: '#ffffff',
+                                        color: '#000000',
+                                        '&:hover': {
+                                            backgroundColor: '#e6e6e6'
+                                        }
+                                    }}
+                                >
+                                    {siteConfig?.siteEnable ? "Disable Site" : "Enable Site"}
                                 </Button>
                             </Stack>
                         </CardContent>
                     </Card>
-
                 </Grid>
-                <Grid xs={12} md={12}>
-                    <Card>
+
+                <Grid xs={12}>
+                    <Card sx={{backgroundColor: '#1a1a1a', border: '1px solid #333333'}}>
                         <CardContent>
-                            <Typography level="h4" sx={{mb: 2}}>Send Coupons</Typography>
-                            <EmailForm/>
+                            <Typography level="h4" sx={{mb: 2, color: '#ffffff'}}>
+                                Send Coupons & Notifications
+                            </Typography>
+                            <Box sx={{backgroundColor: '#000000', p: 2, borderRadius: 'md'}}>
+                                <EmailForm/>
+                            </Box>
                         </CardContent>
                     </Card>
                 </Grid>
             </Grid>
         </Box>
-    ), [siteConfig, enabledTimeDisplay]);
+    ), [siteConfig, enabledTimeDisplay, alert]);
 
     const TicketStatusContent = useMemo(() => (
-        <Box sx={{p: 3}}>
-            <Typography level="h2" sx={{mb: 3}}>Tickets Status</Typography>
+        <Box sx={{p: 3, backgroundColor: '#000000', minHeight: '100vh'}}>
+            <Typography level="h2" sx={{mb: 3, color: '#ffffff', fontWeight: 'bold'}}>
+                Yogeshwari Tickets Status
+            </Typography>
             <Grid container spacing={3}>
-                <Grid xs={12} md={12}>
-                    <TicketStatusGraph/>
+                <Grid xs={12}>
+                    <Card sx={{backgroundColor: '#1a1a1a', border: '1px solid #333333'}}>
+                        <CardContent>
+                            <Box sx={{backgroundColor: '#000000', p: 2, borderRadius: 'md'}}>
+                                <TicketStatusGraph/>
+                            </Box>
+                        </CardContent>
+                    </Card>
                 </Grid>
             </Grid>
         </Box>
     ), []);
-
-    const ManageConcertsContent = useMemo(() => (
-        <Box sx={{p: 3}}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{mb: 3}}>
-                <Typography level="h2">Manage Concerts</Typography>
-                <Button startDecorator={<Add/>} onClick={() => setOpenEventModal(true)}>
-                    Add Event
-                </Button>
-            </Stack>
-
-            <Card sx={{mb: 4}}>
-                <CardContent>
-                    <Typography level="h4" sx={{mb: 2}}>Events</Typography>
-                    <Table>
-                        <thead>
-                        <tr>
-                            <th>Event Name</th>
-                            <th>Date & Time</th>
-                            <th>Location</th>
-                            <th>Max Tickets</th>
-                            <th>Organizer</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {events.map((event) => (
-                            <tr key={event._id}>
-                                <td>{event.eventName}</td>
-                                <td>{event.eventDate} at {event.eventTime}</td>
-                                <td>{event.eventLocation}</td>
-                                <td>{event.maxTicket}</td>
-                                <td>{event.organizer}</td>
-                                <td>
-                                    <Stack direction="row" spacing={1}>
-                                        <IconButton
-                                            size="sm"
-                                            onClick={() => {
-                                                setSelectedEvent(event);
-                                                setEventForm(event);
-                                                setOpenEventModal(true);
-                                            }}
-                                        >
-                                            <Edit/>
-                                        </IconButton>
-                                        <IconButton
-                                            size="sm"
-                                            color="danger"
-                                            onClick={() => setEvents(prev => prev.filter(e => e._id !== event._id))}
-                                        >
-                                            <Delete/>
-                                        </IconButton>
-                                    </Stack>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </Table>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardContent>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{mb: 2}}>
-                        <Typography level="h4">Zone Configuration</Typography>
-                        <Button startDecorator={<Add/>} onClick={() => setOpenZoneModal(true)}>
-                            Add Zone
-                        </Button>
-                    </Stack>
-
-                    <Table>
-                        <thead>
-                        <tr>
-                            <th>Event</th>
-                            <th>Zone</th>
-                            <th>Price</th>
-                            <th>Available</th>
-                            <th>Sold/Max</th>
-                            <th>Label</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {zones.map((zone) => {
-                            const event = events.find(e => e._id === zone.eventIdDoc);
-                            return (
-                                <tr key={zone._id}>
-                                    <td>{event?.eventName || 'Unknown Event'}</td>
-                                    <td>{zone.name}</td>
-                                    <td>${zone.price}</td>
-                                    <td>
-                                        <Chip color={zone.available ? 'success' : 'danger'}>
-                                            {zone.available ? 'Available' : 'Sold Out'}
-                                        </Chip>
-                                    </td>
-                                    <td>{zone.soldTicket}/{zone.maxTicket}</td>
-                                    <td>
-                                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                                            <Box
-                                                sx={{
-                                                    width: 16,
-                                                    height: 16,
-                                                    borderRadius: '50%',
-                                                    backgroundColor: zone.labelColor
-                                                }}
-                                            />
-                                            {zone.labelPosition}
-                                        </Box>
-                                    </td>
-                                    <td>
-                                        <Stack direction="row" spacing={1}>
-                                            <IconButton
-                                                size="sm"
-                                                onClick={() => {
-                                                    setSelectedZone(zone);
-                                                    setZoneForm(zone);
-                                                    setSelectedEventForZone(zone.eventIdDoc);
-                                                    setOpenZoneModal(true);
-                                                }}
-                                            >
-                                                <Edit/>
-                                            </IconButton>
-                                            <IconButton
-                                                size="sm"
-                                                color="danger"
-                                                onClick={() => setZones(prev => prev.filter(z => z._id !== zone._id))}
-                                            >
-                                                <Delete/>
-                                            </IconButton>
-                                        </Stack>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                        </tbody>
-                    </Table>
-                </CardContent>
-            </Card>
-        </Box>
-    ), [events, zones]);
 
     const [userSearchEmail, setUserSearchEmail] = useState<string>('');
 
@@ -576,12 +479,19 @@ const TicketingAdminDashboard: React.FC = () => {
     }, [users, userSearchEmail]);
 
     const ManageUsersContent = useMemo(() => (
-        <Box sx={{p: 3}}>
-            <Typography level="h2" sx={{mb: 3}}>Manage Users</Typography>
-            <Users/>
-
+        <Box sx={{p: 3, backgroundColor: '#000000', minHeight: '100vh'}}>
+            <Typography level="h2" sx={{mb: 3, color: '#ffffff', fontWeight: 'bold'}}>
+                Yogeshwari User Management
+            </Typography>
+            <Card sx={{backgroundColor: '#1a1a1a', border: '1px solid #333333'}}>
+                <CardContent>
+                    <Box sx={{backgroundColor: '#000000', p: 2, borderRadius: 'md'}}>
+                        <Users/>
+                    </Box>
+                </CardContent>
+            </Card>
         </Box>
-    ), [users, handleUserToggle, userSearchEmail, filteredUsers]);
+    ), []);
 
     const renderContent = useCallback(() => {
         switch (selectedMenu) {
@@ -589,8 +499,6 @@ const TicketingAdminDashboard: React.FC = () => {
                 return DashboardContent;
             case 'ticket':
                 return TicketStatusContent;
-            case 'concerts':
-                return ManageConcertsContent;
             case 'users':
                 return ManageUsersContent;
             case 'treasureHunter':
@@ -598,312 +506,82 @@ const TicketingAdminDashboard: React.FC = () => {
             default:
                 return DashboardContent;
         }
-    }, [selectedMenu, DashboardContent, TicketStatusContent, ManageConcertsContent, ManageUsersContent, TreasureHunterContent]);
+    }, [selectedMenu, DashboardContent, TicketStatusContent, ManageUsersContent, TreasureHunterContent]);
 
     return (
-        <CssVarsProvider>
+        <CssVarsProvider theme={blackWhiteTheme} defaultMode="dark">
             <CssBaseline/>
-            <Box sx={{display: 'flex', minHeight: '100vh'}}>
+            <Box sx={{
+                display: 'flex',
+                minHeight: '100vh',
+                width: '100vw',
+                backgroundColor: '#000000',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                zIndex: 9999,
+                overflow: 'hidden'
+            }}>
                 <Sheet
                     sx={{
                         width: 280,
                         p: 2,
-                        borderRight: '1px solid',
-                        borderColor: 'divider',
+                        backgroundColor: '#1a1a1a',
+                        borderRight: '1px solid #333333',
                         position: 'sticky',
                         top: 0,
                         height: '100vh',
                         overflowY: 'auto'
                     }}
                 >
-                    <Typography level="h3" sx={{mb: 3, px: 2}}>
-                        Ticketing Admin
+                    <Typography
+                        level="h3"
+                        sx={{
+                            mb: 3,
+                            px: 2,
+                            color: '#ffffff',
+                            fontWeight: 'bold',
+                            textAlign: 'center'
+                        }}
+                    >
+                        Yogeshwari Admin
                     </Typography>
 
-                    <List>
-                        {menuItems.map((item) => (
-                            <ListItem key={item.key}>
+                    <List sx={{'--ListItem-paddingY': '8px'}}>
+                        {menuItems.map((item, index) => (
+                            <ListItem key={item.key} >
                                 <ListItemButton
+                                    style={{ backgroundColor: selectedMenu === item.key ? '#2a2a2a' : 'transparent'}}
                                     selected={selectedMenu === item.key}
                                     onClick={() => setSelectedMenu(item.key)}
+                                    sx={{
+                                        color: '#000000',
+                                        '&:hover': {
+                                            backgroundColor: '#2a2a2a'
+                                        },
+                                        borderRadius: 'md'
+                                    }}
                                 >
                                     <ListItemDecorator>{item.icon}</ListItemDecorator>
-                                    <ListItemContent>{item.label}</ListItemContent>
+                                    <ListItemContent sx={{color: '#ffffff'}}>
+                                        {item.label}
+                                    </ListItemContent>
                                 </ListItemButton>
                             </ListItem>
                         ))}
                     </List>
                 </Sheet>
 
-                <Box sx={{flex: 1, minHeight: '100vh'}}>
+                <Box sx={{
+                    flex: 1,
+                    height: '100vh',
+                    backgroundColor: '#000000',
+                    overflowY: 'auto',
+                    overflowX: 'hidden'
+                }}>
                     {renderContent()}
                 </Box>
             </Box>
-
-            <Modal open={openEventModal} onClose={() => setOpenEventModal(false)}>
-                <ModalDialog sx={{width: '90vw', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto'}}>
-                    <ModalClose/>
-                    <Typography level="h4" sx={{mb: 2}}>
-                        {selectedEvent ? 'Edit Event' : 'Add New Event'}
-                    </Typography>
-                    <Stack spacing={2} sx={{minHeight: 'fit-content'}}>
-                        <Grid container spacing={2}>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Event Name</FormLabel>
-                                    <Input
-                                        value={eventForm.eventName || ''}
-                                        onChange={(e) => setEventForm({...eventForm, eventName: e.target.value})}
-                                        placeholder="Enter event name"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Event ID</FormLabel>
-                                    <Input
-                                        value={eventForm.eventId || ''}
-                                        onChange={(e) => setEventForm({...eventForm, eventId: e.target.value})}
-                                        placeholder="Enter unique event ID"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Event Date</FormLabel>
-                                    <Input
-                                        type="date"
-                                        value={eventForm.eventDate || ''}
-                                        onChange={(e) => setEventForm({...eventForm, eventDate: e.target.value})}
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Event Time</FormLabel>
-                                    <Input
-                                        value={eventForm.eventTime || ''}
-                                        onChange={(e) => setEventForm({...eventForm, eventTime: e.target.value})}
-                                        placeholder="e.g., 6:00 PM"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Location</FormLabel>
-                                    <Input
-                                        value={eventForm.eventLocation || ''}
-                                        onChange={(e) => setEventForm({...eventForm, eventLocation: e.target.value})}
-                                        placeholder="Event venue location"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Max Tickets</FormLabel>
-                                    <Input
-                                        type="number"
-                                        value={eventForm.maxTicket || ''}
-                                        onChange={(e) => setEventForm({
-                                            ...eventForm,
-                                            maxTicket: parseInt(e.target.value) || 0
-                                        })}
-                                        placeholder="Total available tickets"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Organizer</FormLabel>
-                                    <Input
-                                        value={eventForm.organizer || ''}
-                                        onChange={(e) => setEventForm({...eventForm, organizer: e.target.value})}
-                                        placeholder="Event organizer name"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Theme</FormLabel>
-                                    <Select
-                                        value={eventForm.theme || 'white'}
-                                        onChange={(_, value) => setEventForm({...eventForm, theme: value as string})}
-                                    >
-                                        <Option value="white">White</Option>
-                                        <Option value="dark">Dark</Option>
-                                        <Option value="colorful">Colorful</Option>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12}>
-                                <FormControl>
-                                    <FormLabel>Image URL</FormLabel>
-                                    <Input
-                                        value={eventForm.image || ''}
-                                        onChange={(e) => setEventForm({...eventForm, image: e.target.value})}
-                                        placeholder="https://example.com/event-image.jpg"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12}>
-                                <FormControl>
-                                    <FormLabel>Description</FormLabel>
-                                    <Textarea
-                                        minRows={3}
-                                        value={eventForm.eventDescription || ''}
-                                        onChange={(e) => setEventForm({...eventForm, eventDescription: e.target.value})}
-                                        placeholder="Describe the event..."
-                                    />
-                                </FormControl>
-                            </Grid>
-                        </Grid>
-                        <Box sx={{display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3}}>
-                            <Button variant="outlined" onClick={() => setOpenEventModal(false)}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleEventSave}>
-                                {selectedEvent ? 'Update Event' : 'Create Event'}
-                            </Button>
-                        </Box>
-                    </Stack>
-                </ModalDialog>
-            </Modal>
-
-            <Modal open={openZoneModal} onClose={() => setOpenZoneModal(false)}>
-                <ModalDialog sx={{width: '90vw', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto'}}>
-                    <ModalClose/>
-                    <Typography level="h4" sx={{mb: 2}}>
-                        {selectedZone ? 'Edit Zone' : 'Add New Zone'}
-                    </Typography>
-                    <Stack spacing={2} sx={{minHeight: 'fit-content'}}>
-                        <Grid container spacing={2}>
-                            <Grid xs={12}>
-                                <FormControl>
-                                    <FormLabel>Select Event</FormLabel>
-                                    <Select
-                                        value={selectedEventForZone}
-                                        onChange={(_, value) => setSelectedEventForZone(value as string)}
-                                        placeholder="Choose an event for this zone"
-                                    >
-                                        {events.map((event) => (
-                                            <Option key={event._id} value={event._id}>
-                                                {event.eventName} - {event.eventDate}
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Zone ID</FormLabel>
-                                    <Input
-                                        value={zoneForm.zoneId || ''}
-                                        onChange={(e) => setZoneForm({...zoneForm, zoneId: e.target.value})}
-                                        placeholder="e.g., zone-a, vip-section"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Zone Name</FormLabel>
-                                    <Input
-                                        value={zoneForm.name || ''}
-                                        onChange={(e) => setZoneForm({...zoneForm, name: e.target.value})}
-                                        placeholder="e.g., VIP Section, General Admission"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Price ($)</FormLabel>
-                                    <Input
-                                        type="number"
-                                        value={zoneForm.price || ''}
-                                        onChange={(e) => setZoneForm({
-                                            ...zoneForm,
-                                            price: parseInt(e.target.value) || 0
-                                        })}
-                                        placeholder="Ticket price"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Max Tickets</FormLabel>
-                                    <Input
-                                        type="number"
-                                        value={zoneForm.maxTicket || ''}
-                                        onChange={(e) => setZoneForm({
-                                            ...zoneForm,
-                                            maxTicket: parseInt(e.target.value) || 0
-                                        })}
-                                        placeholder="Maximum available tickets"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Discount (%)</FormLabel>
-                                    <Input
-                                        type="number"
-                                        value={zoneForm.discount || 0}
-                                        onChange={(e) => setZoneForm({
-                                            ...zoneForm,
-                                            discount: parseInt(e.target.value) || 0
-                                        })}
-                                        placeholder="Discount percentage"
-                                    />
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12} sm={6}>
-                                <FormControl>
-                                    <FormLabel>Label Position</FormLabel>
-                                    <Select
-                                        value={zoneForm.labelPosition || 'right'}
-                                        onChange={(_, value) => setZoneForm({
-                                            ...zoneForm,
-                                            labelPosition: value as string
-                                        })}
-                                    >
-                                        <Option value="left">Left</Option>
-                                        <Option value="right">Right</Option>
-                                        <Option value="center">Center</Option>
-                                        <Option value="top">Top</Option>
-                                        <Option value="bottom">Bottom</Option>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid xs={12}>
-                                <FormControl>
-                                    <FormLabel>Label Color</FormLabel>
-                                    <Box sx={{display: 'flex', gap: 2, alignItems: 'flex-end'}}>
-                                        <Input
-                                            type="color"
-                                            value={zoneForm.labelColor || '#8666d5'}
-                                            onChange={(e) => setZoneForm({...zoneForm, labelColor: e.target.value})}
-                                            sx={{width: 80}}
-                                        />
-                                        <Input
-                                            value={zoneForm.labelColor || '#8666d5'}
-                                            onChange={(e) => setZoneForm({...zoneForm, labelColor: e.target.value})}
-                                            placeholder="#8666d5"
-                                            sx={{flex: 1}}
-                                        />
-                                    </Box>
-                                </FormControl>
-                            </Grid>
-                        </Grid>
-                        <Box sx={{display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3}}>
-                            <Button variant="outlined" onClick={() => setOpenZoneModal(false)}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleZoneSave}>
-                                {selectedZone ? 'Update Zone' : 'Create Zone'}
-                            </Button>
-                        </Box>
-                    </Stack>
-                </ModalDialog>
-            </Modal>
         </CssVarsProvider>
     );
 };
