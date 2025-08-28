@@ -19,7 +19,7 @@ import {
     Stack,
     Typography
 } from '@mui/joy';
-import {Dashboard, Email, People, Queue} from '@mui/icons-material';
+import {Dashboard, Email, Logout, People, Queue} from '@mui/icons-material';
 import UserRegistrationGraph from "./components/UserRegistrationraph";
 import EmailForm from "./components/EmailForm";
 import {useMutation, useQuery} from "@apollo/client";
@@ -29,6 +29,7 @@ import MaleVsFemail from "./components/MaleVsFemail";
 import AgeDistribution from "./components/AgeDistributio";
 import Users from "./components/Users";
 import TicketStatusGraph from "./components/TicketStatusGraph";
+import {useLogin} from "./context/login.context";
 
 // Black & White Theme
 const blackWhiteTheme = extendTheme({
@@ -137,6 +138,7 @@ const TicketingAdminDashboard: React.FC = () => {
     const [eventForm, setEventForm] = useState<Partial<Event>>({});
     const [zoneForm, setZoneForm] = useState<Partial<Zone>>({});
     const [selectedEventForZone, setSelectedEventForZone] = useState<string>('');
+    const{logoutUser} = useLogin();
     const [alert, setAlert] = useState({
         visible: false,
         message: "",
@@ -170,6 +172,7 @@ const TicketingAdminDashboard: React.FC = () => {
         {key: 'ticket', label: 'Tickets Status', icon: <Queue sx={{color: '#cccccc'}}/>},
         {key: 'users', label: 'Manage Users', icon: <People sx={{color: '#cccccc'}}/>},
         {key: 'treasureHunter', label: 'Treasure Hunter', icon: <Email sx={{color: '#cccccc'}}/>}
+
     ], []);
 
     const millisecondsToDatetimeLocal = (milliseconds) => {
@@ -569,6 +572,24 @@ const TicketingAdminDashboard: React.FC = () => {
                                 </ListItemButton>
                             </ListItem>
                         ))}
+                        <ListItem>
+                            <ListItemButton
+                                style={{ backgroundColor: 'transparent'}}
+                                onClick={() => logoutUser()}
+                                sx={{
+                                    color: '#000000',
+                                    '&:hover': {
+                                        backgroundColor: '#2a2a2a'
+                                    },
+                                    borderRadius: 'md'
+                                }}
+                            >
+                                <ListItemDecorator><Logout style={{color:"#ffffff"}}/></ListItemDecorator>
+                                <ListItemContent sx={{color: '#ffffff'}}>
+                                   Logout
+                                </ListItemContent>
+                            </ListItemButton>
+                        </ListItem>
                     </List>
                 </Sheet>
 
