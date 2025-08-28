@@ -1,6 +1,7 @@
-import {LOGIN_FAILURE, LOGIN_START, LOGIN_SUCCESS, LoginActionTypes, LOGOUT} from './login.action';
-import {User} from "../../context/login.context";
+import { LOGIN_FAILURE, LOGIN_START, LOGIN_SUCCESS, LoginActionTypes, LOGOUT } from './login.action';
+import { User } from "../../context/login.context";
 
+// State interface
 export interface LoginState {
     loading: boolean;
     user: User | null;
@@ -8,21 +9,25 @@ export interface LoginState {
     isAuthenticated: boolean;
 }
 
-
+// Initial state
 export const initialLoginState: LoginState = {
-    loading: false,
     user: null,
+    loading: false,
     error: null,
-    isAuthenticated: false
+    isAuthenticated: false,
 };
 
-export function loginReducer(state: LoginState = initialLoginState, action: LoginActionTypes): LoginState {
+// Reducer function
+export function loginReducer(
+    state: LoginState = initialLoginState,
+    action: LoginActionTypes
+): LoginState {
     switch (action.type) {
         case LOGIN_START:
             return {
                 ...state,
                 loading: true,
-                error: null
+                error: null,
             };
 
         case LOGIN_SUCCESS:
@@ -31,7 +36,7 @@ export function loginReducer(state: LoginState = initialLoginState, action: Logi
                 loading: false,
                 user: action.payload,
                 error: null,
-                isAuthenticated: true
+                isAuthenticated: true,
             };
 
         case LOGIN_FAILURE:
@@ -40,7 +45,7 @@ export function loginReducer(state: LoginState = initialLoginState, action: Logi
                 loading: false,
                 user: null,
                 error: action.payload,
-                isAuthenticated: false
+                isAuthenticated: false,
             };
 
         case LOGOUT:
@@ -48,7 +53,7 @@ export function loginReducer(state: LoginState = initialLoginState, action: Logi
                 ...state,
                 user: null,
                 error: null,
-                isAuthenticated: false
+                isAuthenticated: false,
             };
 
         default:

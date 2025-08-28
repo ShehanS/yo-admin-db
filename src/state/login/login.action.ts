@@ -1,6 +1,6 @@
 // Action Types
 import {User} from "../../context/login.context";
-import {IAPIResponse} from "../../interfaces/data.interfaces";
+
 
 export const LOGIN_START = 'LOGIN_START';
 export const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
